@@ -4,161 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Abundancia PIR ✨</title>
-    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        input[type="range"] { accent-color: #4f46e5; }
-    </style>
 </head>
 <body class="bg-slate-50">
     <div id="root"></div>
-
     <script type="text/babel">
         const { useState, useMemo, useEffect } = React;
-        const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } = Recharts;
-
-        // --- CONFIGURACIÓN ---
-        const apiKey = ""; // PEGA TU API KEY AQUÍ PARA ACTIVAR AL MENTOR
-        const COLORS = ['#6366f1', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+        const { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } = Recharts;
 
         const App = () => {
-            const [activeTab, setActiveTab] = useState('presupuesto');
             const [income, setIncome] = useState(1600);
-            const [expenses, setExpenses] = useState({ coche: 300, gasolina: 150, casa: 200, ocio: 200, otros: 100 });
-            const [allocation, setAllocation] = useState({ rentaVariable: 70, rentaFija: 10, oro: 10, bitcoin: 5, liquidez: 5 });
+            const [expenses, setExpenses] = useState({ coche: 450, casa: 200, ocio: 200 });
+            const surplus = income - Object.values(expenses).reduce((a, b) => a + b, 0);
 
-            // Cálculos
-            const totalExpenses = useMemo(() => Object.values(expenses).reduce((a, b) => a + b, 0), [expenses]);
-            const surplus = income - totalExpenses;
-            const savingsRate = income > 0 ? ((surplus / income) * 100).toFixed(1) : 0;
-
-            const assetInfo = {
-                rentaVariable: { label: 'Renta Variable', color: '#3b82f6', return: 0.09 },
-                rentaFija: { label: 'Renta Fija', color: '#64748b', return: 0.03 },
-                oro: { label: 'Oro', color: '#eab308', return: 0.05 },
-                bitcoin: { label: 'Bitcoin', color: '#f97316', return: 0.15 },
-                liquidez: { label: 'Liquidez', color: '#10b981', return: 0.02 }
-            };
-
-            const weightedReturn = useMemo(() => {
-                return Object.keys(allocation).reduce((acc, key) => acc + (allocation[key] / 100) * assetInfo[key].return, 0);
-            }, [allocation]);
-
-            const budgetData = useMemo(() => Object.keys(expenses).map(key => ({ name: key, value: expenses[key] })), [expenses]);
-            const investData = useMemo(() => Object.keys(allocation).map(key => ({ name: assetInfo[key].label, value: allocation[key], color: assetInfo[key].color })), [allocation]);
-
-            useEffect(() => { lucide.createIcons(); }, [activeTab]);
+            useEffect(() => { lucide.createIcons(); }, []);
 
             return (
-                <div className="max-w-4xl mx-auto p-4 space-y-6">
-                    {/* Header */}
-                    <div className="bg-indigo-900 rounded-3xl p-6 text-white shadow-xl">
-                        <h1 className="text-2xl font-extrabold flex items-center gap-2">Abundancia PIR <i data-lucide="sparkles"></i></h1>
-                        <p className="text-indigo-200 text-sm italic">"Tu libertad es una decisión."</p>
-                        <div className="mt-4 flex gap-4">
-                            <div className="bg-white/10 p-3 rounded-xl flex-1 text-center">
-                                <p className="text-[10px] uppercase opacity-60">Excedente</p>
-                                <p className="text-xl font-bold">{surplus}€</p>
-                            </div>
-                            <div className="bg-white/10 p-3 rounded-xl flex-1 text-center">
-                                <p className="text-[10px] uppercase opacity-60">Rentabilidad</p>
-                                <p className="text-xl font-bold">{(weightedReturn * 100).toFixed(1)}%</p>
-                            </div>
+                <div className="max-w-md mx-auto p-6 space-y-6 font-sans">
+                    <div className="bg-indigo-900 text-white p-6 rounded-3xl shadow-xl">
+                        <h1 className="text-xl font-bold flex items-center gap-2">Mi Abundancia PIR <i data-lucide="sparkles"></i></h1>
+                        <div className="mt-4 flex justify-between bg-white/10 p-4 rounded-2xl">
+                            <div><p className="text-[10px] opacity-60">AHORRO</p><p className="text-2xl font-bold">{surplus}€</p></div>
+                            <div className="text-right"><p className="text-[10px] opacity-60">TASA</p><p className="text-2xl font-bold">{((surplus/income)*100).toFixed(0)}%</p></div>
                         </div>
                     </div>
 
-                    {/* Nav */}
-                    <div className="flex gap-2 bg-slate-200 p-1 rounded-xl overflow-x-auto">
-                        {['presupuesto', 'inversion', 'energia'].map(t => (
-                            <button key={t} onClick={() => setActiveTab(t)} className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold capitalize ${activeTab === t ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>
-                                {t}
-                            </button>
+                    <div className="bg-white p-6 rounded-3xl border shadow-sm space-y-4">
+                        <h2 className="font-bold text-slate-700 flex items-center gap-2"><i data-lucide="wallet"></i> Ajustar Presupuesto</h2>
+                        <div>
+                            <label className="text-xs font-bold text-slate-400">INGRESOS: {income}€</label>
+                            <input type="range" min="1000" max="3000" step="50" value={income} onChange={(e) => setIncome(Number(e.target.value))} className="w-full h-2 bg-indigo-100 rounded-lg appearance-none accent-indigo-600" />
+                        </div>
+                        {Object.keys(expenses).map(k => (
+                            <div key={k}>
+                                <label className="text-[10px] font-bold text-slate-400 uppercase">{k}: {expenses[k]}€</label>
+                                <input type="range" min="0" max="600" step="10" value={expenses[k]} onChange={(e) => setExpenses({...expenses, [k]: Number(e.target.value)})} className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none accent-slate-400" />
+                            </div>
                         ))}
                     </div>
 
-                    {/* Content */}
-                    {activeTab === 'presupuesto' && (
-                        <div className="space-y-6 animate-in fade-in duration-500">
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border">
-                                <h3 className="font-bold mb-4 flex items-center gap-2 text-indigo-600"><i data-lucide="wallet"></i> Gastos e Ingresos</h3>
-                                <div className="space-y-6">
-                                    <div>
-                                        <div className="flex justify-between text-xs mb-1 font-bold"><span>INGRESOS</span><span>{income}€</span></div>
-                                        <input type="range" min="1000" max="4000" step="50" value={income} onChange={(e) => setIncome(Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none" />
-                                    </div>
-                                    {Object.keys(expenses).map(key => (
-                                        <div key={key}>
-                                            <div className="flex justify-between text-[10px] mb-1 font-bold text-slate-500"><span>{key.toUpperCase()}</span><span>{expenses[key]}€</span></div>
-                                            <input type="range" min="0" max="600" step="10" value={expenses[key]} onChange={(e) => setExpenses({...expenses, [key]: Number(e.target.value)})} className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none" />
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'inversion' && (
-                        <div className="space-y-6 animate-in fade-in duration-500">
-                            <div className="bg-white p-6 rounded-2xl shadow-sm border">
-                                <h3 className="font-bold mb-4 text-emerald-600 flex items-center gap-2"><i data-lucide="trending-up"></i> Inversión Mensual</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        {Object.keys(allocation).map(key => (
-                                            <div key={key}>
-                                                <div className="flex justify-between text-[10px] font-bold" style={{color: assetInfo[key].color}}>
-                                                    <span>{assetInfo[key].label}</span>
-                                                    <span>{Math.round(surplus * (allocation[key]/100))}€ ({allocation[key]}%)</span>
-                                                </div>
-                                                <input type="range" min="0" max="100" step="5" value={allocation[key]} onChange={(e) => setAllocation({...allocation, [key]: Number(e.target.value)})} className="w-full h-1 appearance-none" style={{accentColor: assetInfo[key].color}} />
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="h-48">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie data={investData} innerRadius={40} outerRadius={60} paddingAngle={5} dataKey="value">
-                                                    {investData.map((entry, index) => <Cell key={index} fill={entry.color} />)}
-                                                </Pie>
-                                                <Tooltip />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'energia' && (
-                        <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100">
-                            <h3 className="font-bold text-indigo-900 mb-4 flex items-center gap-2"><i data-lucide="battery-charging"></i> Sistemas Moris</h3>
-                            <div className="space-y-4">
-                                <div className="bg-white p-4 rounded-xl shadow-sm border border-indigo-100">
-                                    <h4 className="font-bold text-sm">Batch Cooking Dominical</h4>
-                                    <p className="text-xs text-slate-500">Cocina los tuppers hoy para no gastar energía mañana.</p>
-                                </div>
-                                <div className="bg-white p-4 rounded-xl shadow-sm border border-indigo-100">
-                                    <h4 className="font-bold text-sm">Uniforme de Residente</h4>
-                                    <p className="text-xs text-slate-500">Ropa preparada en el burro para eliminar micro-decisiones.</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="text-center opacity-30 py-6 text-[10px] font-bold tracking-widest uppercase">
-                        Sistema de Abundancia Personalizado ✨
+                    <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100">
+                        <h3 className="font-bold text-emerald-800 text-sm mb-2 italic">"Págate a ti mismo primero"</h3>
+                        <p className="text-xs text-emerald-600 leading-relaxed text-justify">
+                            Según Babilonia, debes separar {Math.round(income * 0.1)}€ nada más cobrar. Tu excedente actual de {surplus}€ te permite batir a la inflación si lo inviertes.
+                        </p>
                     </div>
+                    <p className="text-[10px] text-center text-slate-300 font-bold uppercase tracking-widest">Sistemas de éxito • Moris & Fernández</p>
                 </div>
             );
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>
