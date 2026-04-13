@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan de Abundancia PIR</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Aquí va la lógica de tu App adaptada para funcionar en un solo archivo
+        const { useState, useMemo } = React;
+        const { 
+            AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+            PieChart, Pie, Cell, Legend 
+        } = Recharts;
+
+        // Replicamos la lógica de los iconos de Lucide
+        const Icon = ({ name, size = 20, className = "" }) => {
+            return <i data-lucide={name} style={{ width: size, height: size }} className={className}></i>;
+        };
+
+        const App = () => {
+            // ... (Copia aquí el contenido de la función App que creamos anteriormente)
+            // Asegúrate de inicializar Lucide después de renderizar
+            React.useEffect(() => {
+                lucide.createIcons();
+            });
+
+            return (
+                <div className="p-8 text-center">
+                    <h1 className="text-2xl font-bold">¡Tu App de Abundancia está lista!</h1>
+                    <p>Personaliza este archivo con el código de React que diseñamos.</p>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
