@@ -9,85 +9,83 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        input[type="range"] { accent-color: #4f46e5; }
     </style>
 </head>
 <body class="bg-slate-50">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useMemo, useEffect } = React;
+        const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } = Recharts;
+
+        // --- CONFIGURACIÓN IA ---
+        const apiKey = ""; // Pega aquí tu API Key de Gemini
 
         const App = () => {
+            const [activeTab, setActiveTab] = useState('presupuesto');
+            
+            // Estados de Finanzas (Datos de tu captura)
             const [income, setIncome] = useState(1600);
-            const [expenses, setExpenses] = useState({ coche: 450, casa: 200, ocio: 200, otros: 140 });
+            const [expenses, setExpenses] = useState({
+                coche: 300,
+                gasolina: 150,
+                casa: 200,
+                ocio: 200,
+                otros: 140
+            });
+
+            // Estrategia de Inversión (Curso Javier del Valle)
+            const [allocation, setAllocation] = useState({
+                rentaVariable: 70,
+                rentaFija: 10,
+                oro: 10,
+                bitcoin: 10
+            });
+
+            // Cálculos Dinámicos
             const totalExp = useMemo(() => Object.values(expenses).reduce((a, b) => a + b, 0), [expenses]);
             const surplus = income - totalExp;
+            const savingsRate = ((surplus / income) * 100).toFixed(0);
 
             useEffect(() => {
-                if (window.lucide) {
-                    window.lucide.createIcons();
-                }
-            }, [income, expenses]);
+                if (window.lucide) window.lucide.createIcons();
+            }, [activeTab, income, expenses]);
 
             return (
-                <div className="min-h-screen p-4 md:p-8 flex flex-col items-center">
-                    <div className="w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl p-8 border border-slate-100">
-                        {/* Header Inspirado en Moris */}
-                        <div className="text-center mb-8">
-                            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">SISTEMA PIR <span className="text-indigo-600">✨</span></h1>
+                <div className="min-h-screen pb-20">
+                    <div className="max-w-md mx-auto p-4 space-y-6">
+                        
+                        {/* Header: Sistema PIR */}
+                        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 border border-slate-100 text-center">
+                            <h1 className="text-2xl font-black text-slate-900 tracking-tight">SISTEMA PIR ✨</h1>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Mentalidad de Abundancia</p>
-                        </div>
-
-                        {/* Card Excedente */}
-                        <div className="bg-indigo-50 rounded-3xl p-6 text-center mb-8 border border-indigo-100">
-                            <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Excedente Mensual</p>
-                            <p className="text-5xl font-black text-indigo-600 tracking-tighter">{surplus}€</p>
-                        </div>
-
-                        {/* Sliders de Control */}
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-tight">Ingresos (Sueldo PIR)</label>
-                                    <span className="text-sm font-bold text-slate-900">{income}€</span>
-                                </div>
-                                <input type="range" min="1000" max="3000" step="50" value={income} onChange={(e) => setIncome(Number(e.target.value))} className="w-full h-2 bg-indigo-100 rounded-lg appearance-none accent-indigo-600 cursor-pointer" />
-                            </div>
-
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center">
-                                    <label className="text-[10px] font-extrabold text-slate-500 uppercase tracking-tight">Gastos Totales</label>
-                                    <span className="text-sm font-bold text-slate-900">{totalExp}€</span>
-                                </div>
-                                <input type="range" min="0" max="1500" step="10" value={totalExp} className="w-full h-2 bg-pink-100 rounded-lg appearance-none accent-pink-500 cursor-not-allowed opacity-50" disabled />
+                            
+                            <div className="mt-8 bg-indigo-50 rounded-3xl p-6 border border-indigo-100">
+                                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Excedente Mensual</p>
+                                <p className="text-5xl font-black text-indigo-600 tracking-tighter">{surplus}€</p>
                             </div>
                         </div>
 
-                        {/* Regla de Babilonia */}
-                        <div className="mt-10 p-5 bg-emerald-50 rounded-3xl border border-emerald-100 relative overflow-hidden">
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <i data-lucide="lightbulb" className="w-3 h-3 text-emerald-600"></i>
-                                    <p className="text-[10px] font-black text-emerald-700 uppercase tracking-widest">Regla de Babilonia</p>
-                                </div>
-                                <p className="text-xs text-emerald-800 leading-relaxed italic">
-                                    "Una décima parte de lo que ganas es tuya para conservarla". Debes invertir mínimo <span className="font-bold">{Math.round(income * 0.1)}€</span> cada mes.
-                                </p>
-                            </div>
+                        {/* Navegación por Pestañas */}
+                        <div className="flex gap-1 bg-slate-200 p-1 rounded-2xl sticky top-4 z-50 shadow-sm backdrop-blur-md">
+                            {['presupuesto', 'inversion', 'energia'].map(t => (
+                                <button key={t} onClick={() => setActiveTab(t)} className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all ${activeTab === t ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>
+                                    {t}
+                                </button>
+                            ))}
                         </div>
-                    </div>
 
-                    {/* Footer con Filosofía */}
-                    <p className="mt-8 text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">Menos es más • Moris & Fernández</p>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+                        {/* Pestaña: Presupuesto */}
+                        {activeTab === 'presupuesto' && (
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-lg border border-slate-100 space-y-6 animate-in fade-in duration-500">
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase">
+                                        <span>Ingresos (Sueldo)</span>
+                                        <span className="text-indigo-600 text-sm">{income}€</span>
+                                    </div>
+                                    <input type="range"
