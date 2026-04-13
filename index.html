@@ -8,58 +8,56 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-100">
     <div id="root"></div>
+
     <script type="text/babel">
-        const { useState, useMemo, useEffect } = React;
-        const { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } = Recharts;
-
-        const App = () => {
-            const [income, setIncome] = useState(1600);
-            const [expenses, setExpenses] = useState({ coche: 450, casa: 200, ocio: 200 });
-            const surplus = income - Object.values(expenses).reduce((a, b) => a + b, 0);
-
-            useEffect(() => { lucide.createIcons(); }, []);
+        function App() {
+            const [ingresos, setIngresos] = React.useState(1600);
+            const [gastos, setGastos] = React.useState(850);
+            const excedente = ingresos - gastos;
 
             return (
-                <div className="max-w-md mx-auto p-6 space-y-6 font-sans">
-                    <div className="bg-indigo-900 text-white p-6 rounded-3xl shadow-xl">
-                        <h1 className="text-xl font-bold flex items-center gap-2">Mi Abundancia PIR <i data-lucide="sparkles"></i></h1>
-                        <div className="mt-4 flex justify-between bg-white/10 p-4 rounded-2xl">
-                            <div><p className="text-[10px] opacity-60">AHORRO</p><p className="text-2xl font-bold">{surplus}€</p></div>
-                            <div className="text-right"><p className="text-[10px] opacity-60">TASA</p><p className="text-2xl font-bold">{((surplus/income)*100).toFixed(0)}%</p></div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-3xl border shadow-sm space-y-4">
-                        <h2 className="font-bold text-slate-700 flex items-center gap-2"><i data-lucide="wallet"></i> Ajustar Presupuesto</h2>
-                        <div>
-                            <label className="text-xs font-bold text-slate-400">INGRESOS: {income}€</label>
-                            <input type="range" min="1000" max="3000" step="50" value={income} onChange={(e) => setIncome(Number(e.target.value))} className="w-full h-2 bg-indigo-100 rounded-lg appearance-none accent-indigo-600" />
-                        </div>
-                        {Object.keys(expenses).map(k => (
-                            <div key={k}>
-                                <label className="text-[10px] font-bold text-slate-400 uppercase">{k}: {expenses[k]}€</label>
-                                <input type="range" min="0" max="600" step="10" value={expenses[k]} onChange={(e) => setExpenses({...expenses, [k]: Number(e.target.value)})} className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none accent-slate-400" />
+                <div className="flex flex-col items-center justify-center min-h-screen p-4 font-sans">
+                    <div className="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-md border-t-8 border-indigo-600">
+                        <h1 className="text-2xl font-black text-indigo-900 text-center mb-2">SISTEMA PIR ✨</h1>
+                        <p className="text-center text-slate-400 text-xs mb-6 uppercase tracking-widest font-bold">Mentalidad de Abundancia</p>
+                        
+                        <div className="space-y-6">
+                            <div className="bg-indigo-50 p-4 rounded-2xl text-center">
+                                <p className="text-xs font-bold text-indigo-400">EXCEDENTE MENSUAL</p>
+                                <p className="text-4xl font-black text-indigo-600">{excedente}€</p>
                             </div>
-                        ))}
-                    </div>
 
-                    <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100">
-                        <h3 className="font-bold text-emerald-800 text-sm mb-2 italic">"Págate a ti mismo primero"</h3>
-                        <p className="text-xs text-emerald-600 leading-relaxed text-justify">
-                            Según Babilonia, debes separar {Math.round(income * 0.1)}€ nada más cobrar. Tu excedente actual de {surplus}€ te permite batir a la inflación si lo inviertes.
-                        </p>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-500 mb-1">INGRESOS (SUELDO PIR)</label>
+                                    <input type="range" min="1000" max="3000" step="50" value={ingresos} onChange={(e) => setIngresos(Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none accent-indigo-600" />
+                                    <p className="text-right text-sm font-bold mt-1 text-slate-700">{ingresos}€</p>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-500 mb-1">GASTOS TOTALES</label>
+                                    <input type="range" min="0" max="1500" step="10" value={gastos} onChange={(e) => setGastos(Number(e.target.value))} className="w-full h-2 bg-slate-200 rounded-lg appearance-none accent-pink-500" />
+                                    <p className="text-right text-sm font-bold mt-1 text-slate-700">{gastos}€</p>
+                                </div>
+                            </div>
+
+                            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                                <p className="text-[10px] font-black text-emerald-700 uppercase mb-1">💡 Regla de Babilonia</p>
+                                <p className="text-xs text-emerald-600 italic leading-relaxed">
+                                    "Una décima parte de lo que ganas es tuya para conservarla". Debes invertir mínimo <b>{Math.round(ingresos*0.1)}€</b> cada mes.
+                                </p>
+                            </div>
+                        </div>
                     </div>
-                    <p className="text-[10px] text-center text-slate-300 font-bold uppercase tracking-widest">Sistemas de éxito • Moris & Fernández</p>
+                    <p className="mt-8 text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Menos es más • Moris & Fernández</p>
                 </div>
             );
-        };
+        }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
