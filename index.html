@@ -4,42 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Abundancia PIR ✨</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Cargamos las librerías con versiones específicas y orden correcto para evitar errores de definición -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+    <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        input[type="range"] { accent-color: #4f46e5; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        .custom-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 5px;
+            outline: none;
+        }
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #4f46e5;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useMemo, useEffect } = React;
-        const { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } = Recharts;
 
-        // --- CONFIGURACIÓN IA ---
-        const apiKey = ""; // Pega aquí tu API Key de Gemini
+        // Definimos los componentes de Recharts de forma segura dentro del script de Babel
+        const { 
+            AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
+            ResponsiveContainer, PieChart, Pie, Cell, Legend 
+        } = window.Recharts;
+
+        // Colores para los gráficos
+        const COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#64748b'];
 
         const App = () => {
             const [activeTab, setActiveTab] = useState('presupuesto');
             
-            // Estados de Finanzas (Datos de tu captura)
+            // Estado de Ingresos y Gastos
             const [income, setIncome] = useState(1600);
             const [expenses, setExpenses] = useState({
+                casa: 200,
                 coche: 300,
                 gasolina: 150,
-                casa: 200,
                 ocio: 200,
                 otros: 140
             });
 
-            // Estrategia de Inversión (Curso Javier del Valle)
+            // Estado de Inversión (Porcentajes)
             const [allocation, setAllocation] = useState({
                 rentaVariable: 70,
                 rentaFija: 10,
@@ -47,45 +75,233 @@
                 bitcoin: 10
             });
 
-            // Cálculos Dinámicos
-            const totalExp = useMemo(() => Object.values(expenses).reduce((a, b) => a + b, 0), [expenses]);
-            const surplus = income - totalExp;
-            const savingsRate = ((surplus / income) * 100).toFixed(0);
+            const assetInfo = {
+                rentaVariable: { label: 'Acciones (RV)', color: '#6366f1', return: 0.09 },
+                rentaFija: { label: 'Bonos (RF)', color: '#94a3b8', return: 0.03 },
+                oro: { label: 'Oro', color: '#eab308', return: 0.05 },
+                bitcoin: { label: 'Bitcoin', color: '#f97316', return: 0.15 }
+            };
+
+            // Cálculos
+            const totalExpenses = useMemo(() => Object.values(expenses).reduce((a, b) => a + b, 0), [expenses]);
+            const surplus = income - totalExpenses;
+            const savingsRate = income > 0 ? ((surplus / income) * 100).toFixed(0) : 0;
+
+            const weightedReturn = useMemo(() => {
+                return Object.keys(allocation).reduce((acc, key) => {
+                    return acc + (allocation[key] / 100) * (assetInfo[key]?.return || 0);
+                }, 0);
+            }, [allocation]);
+
+            const budgetPieData = useMemo(() => 
+                Object.keys(expenses).map(key => ({ name: key.toUpperCase(), value: expenses[key] })), 
+            [expenses]);
+
+            const investPieData = useMemo(() => 
+                Object.keys(allocation).map(key => ({ 
+                    name: assetInfo[key].label, 
+                    value: allocation[key] 
+                })), 
+            [allocation]);
+
+            const projectionData = useMemo(() => {
+                const data = [];
+                const monthlyRate = weightedReturn / 12;
+                let balance = 0;
+                for (let i = 0; i <= 20; i++) {
+                    data.push({
+                        year: i,
+                        valor: Math.round(balance),
+                        ahorro: surplus * 12 * i
+                    });
+                    for (let j = 0; j < 12; j++) {
+                        balance = (balance + (surplus > 0 ? surplus : 0)) * (1 + monthlyRate);
+                    }
+                }
+                return data;
+            }, [surplus, weightedReturn]);
 
             useEffect(() => {
                 if (window.lucide) window.lucide.createIcons();
-            }, [activeTab, income, expenses]);
+            }, [activeTab]);
 
             return (
-                <div className="min-h-screen pb-20">
-                    <div className="max-w-md mx-auto p-4 space-y-6">
-                        
-                        {/* Header: Sistema PIR */}
-                        <div className="bg-white rounded-[2.5rem] shadow-xl p-8 border border-slate-100 text-center">
-                            <h1 className="text-2xl font-black text-slate-900 tracking-tight">SISTEMA PIR ✨</h1>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Mentalidad de Abundancia</p>
+                <div className="min-h-screen max-w-md mx-auto bg-slate-50 pb-24">
+                    {/* Header: El Sistema PIR */}
+                    <div className="bg-indigo-950 p-8 pt-12 rounded-b-[3rem] shadow-2xl text-white relative overflow-hidden">
+                        <div className="relative z-10">
+                            <h1 className="text-2xl font-black tracking-tight mb-1 uppercase">Sistema de Abundancia <span className="text-indigo-400">PIR</span></h1>
+                            <p className="text-indigo-300/60 text-[10px] font-bold tracking-[0.2em] uppercase mb-8 italic">"Menos es más • Moris & Fernández"</p>
                             
-                            <div className="mt-8 bg-indigo-50 rounded-3xl p-6 border border-indigo-100">
-                                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-1">Excedente Mensual</p>
-                                <p className="text-5xl font-black text-indigo-600 tracking-tighter">{surplus}€</p>
+                            <div className="bg-white/5 backdrop-blur-md rounded-3xl p-6 border border-white/10">
+                                <p className="text-[10px] font-bold text-indigo-300 uppercase tracking-widest mb-1 text-center">Excedente Mensual Actual</p>
+                                <p className="text-5xl font-black text-center tracking-tighter">{surplus}€</p>
+                                <div className="mt-4 flex justify-between text-[10px] font-bold uppercase tracking-wider text-indigo-200/50">
+                                    <span>Tasa: {savingsRate}%</span>
+                                    <span>Rédito: {(weightedReturn * 100).toFixed(1)}%</span>
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        {/* Navegación por Pestañas */}
-                        <div className="flex gap-1 bg-slate-200 p-1 rounded-2xl sticky top-4 z-50 shadow-sm backdrop-blur-md">
-                            {['presupuesto', 'inversion', 'energia'].map(t => (
-                                <button key={t} onClick={() => setActiveTab(t)} className={`flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all ${activeTab === t ? 'bg-white shadow text-indigo-600' : 'text-slate-500'}`}>
-                                    {t}
+                    {/* Navegación por Pestañas */}
+                    <div className="px-4 -mt-6 relative z-20">
+                        <div className="bg-white/80 backdrop-blur-xl border border-slate-200 p-1.5 rounded-2xl flex shadow-lg">
+                            {['presupuesto', 'inversion', 'proyeccion'].map(tab => (
+                                <button 
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`flex-1 py-3 px-1 rounded-xl text-[10px] font-black uppercase transition-all tracking-tighter ${activeTab === tab ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'text-slate-400'}`}
+                                >
+                                    {tab}
                                 </button>
                             ))}
                         </div>
+                    </div>
 
-                        {/* Pestaña: Presupuesto */}
+                    <div className="p-4 mt-4 space-y-6">
+                        
+                        {/* PESTAÑA: PRESUPUESTO */}
                         {activeTab === 'presupuesto' && (
-                            <div className="bg-white p-8 rounded-[2.5rem] shadow-lg border border-slate-100 space-y-6 animate-in fade-in duration-500">
-                                <div className="space-y-4">
-                                    <div className="flex justify-between items-center text-[10px] font-black text-slate-500 uppercase">
-                                        <span>Ingresos (Sueldo)</span>
-                                        <span className="text-indigo-600 text-sm">{income}€</span>
+                            <div className="space-y-6 animate-in fade-in duration-500">
+                                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                                    <h3 className="text-xs font-black uppercase text-slate-400 mb-6 flex items-center gap-2">
+                                        <i data-lucide="wallet" className="w-3 h-3"></i> Control de Flujo
+                                    </h3>
+                                    
+                                    <div className="space-y-8">
+                                        <div>
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Ingresos Netos</span>
+                                                <span className="text-sm font-bold">{income}€</span>
+                                            </div>
+                                            <input type="range" min="1000" max="4000" step="50" value={income} onChange={(e) => setIncome(Number(e.target.value))} className="custom-slider" />
+                                        </div>
+
+                                        <div className="space-y-6 pt-4 border-t border-slate-50">
+                                            {Object.keys(expenses).map(key => (
+                                                <div key={key}>
+                                                    <div className="flex justify-between mb-1">
+                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{key}</span>
+                                                        <span className="text-xs font-bold text-slate-700">{expenses[key]}€</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" min="0" max="600" step="10" value={expenses[key]} 
+                                                        onChange={(e) => setExpenses({...expenses, [key]: Number(e.target.value)})} 
+                                                        className="custom-slider" 
+                                                        style={{ accentColor: '#94a3b8' }}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
-                                    <input type="range"
+                                </div>
+
+                                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col items-center">
+                                    <h3 className="text-xs font-black uppercase text-slate-400 mb-4 self-start">Reparto de Gastos</h3>
+                                    <div className="h-48 w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie data={budgetPieData} innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
+                                                    {budgetPieData.map((entry, index) => <Cell key={index} fill={COLORS[index % COLORS.length]} />)}
+                                                </Pie>
+                                                <Tooltip />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* PESTAÑA: INVERSIÓN */}
+                        {activeTab === 'inversion' && (
+                            <div className="space-y-6 animate-in fade-in duration-500">
+                                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                                    <h3 className="text-xs font-black uppercase text-slate-400 mb-6 flex items-center gap-2">
+                                        <i data-lucide="coins" className="w-3 h-3 text-emerald-500"></i> Mi Cartera de Activos
+                                    </h3>
+                                    <div className="space-y-6">
+                                        {Object.keys(allocation).map(key => (
+                                            <div key={key} className="bg-slate-50 p-4 rounded-2xl">
+                                                <div className="flex justify-between mb-2">
+                                                    <span className="text-[10px] font-extrabold uppercase" style={{ color: assetInfo[key].color }}>{assetInfo[key].label}</span>
+                                                    <span className="text-xs font-black">{Math.round(surplus * (allocation[key]/100))}€ ({allocation[key]}%)</span>
+                                                </div>
+                                                <input 
+                                                    type="range" min="0" max="100" step="5" value={allocation[key]} 
+                                                    onChange={(e) => setAllocation({...allocation, [key]: Number(e.target.value)})} 
+                                                    className="w-full h-1 appearance-none bg-slate-200 rounded-lg"
+                                                    style={{ accentColor: assetInfo[key].color }}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="p-6 bg-emerald-50 rounded-[2rem] border border-emerald-100">
+                                    <p className="text-[10px] font-black text-emerald-700 uppercase mb-2">💡 Sabiduría de Babilonia</p>
+                                    <p className="text-xs text-emerald-800 leading-relaxed italic">
+                                        "El oro llega con gusto al hombre que ahorra no menos de una décima parte". Tu inversión mensual de {surplus}€ es el {savingsRate}% de tu sueldo. Vas por el buen camino.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* PESTAÑA: PROYECCIÓN */}
+                        {activeTab === 'proyeccion' && (
+                            <div className="space-y-6 animate-in fade-in duration-500">
+                                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                                    <h3 className="text-xs font-black uppercase text-slate-400 mb-6">Proyección a 20 Años</h3>
+                                    <div className="h-64 w-full">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <AreaChart data={projectionData}>
+                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                                <XAxis dataKey="year" fontSize={10} stroke="#94a3b8" />
+                                                <YAxis fontSize={10} stroke="#94a3b8" tickFormatter={v => `${v/1000}k`} />
+                                                <Tooltip formatter={(v) => `${v.toLocaleString()}€`} />
+                                                <Area type="monotone" dataKey="valor" name="Inversión" stroke="#6366f1" fill="#6366f1" fillOpacity={0.1} strokeWidth={3} />
+                                                <Area type="monotone" dataKey="ahorro" name="Ahorro Simple" stroke="#94a3b8" fill="#94a3b8" fillOpacity={0.05} strokeWidth={1} strokeDasharray="5 5" />
+                                            </AreaChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                    <div className="mt-4 p-4 bg-indigo-50 rounded-2xl">
+                                        <p className="text-[10px] font-bold text-indigo-700 text-center uppercase tracking-widest leading-relaxed">
+                                            Capital Final: {projectionData[20].valor.toLocaleString()}€
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-900 p-6 rounded-[2rem] text-white">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-3">Sistemas de Energía (Moris)</h4>
+                                    <ul className="space-y-3">
+                                        <li className="flex items-center gap-3 text-xs">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                                            Tuppers el domingo (Batch Cooking)
+                                        </li>
+                                        <li className="flex items-center gap-3 text-xs">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                                            Ropa en el burro para toda la semana
+                                        </li>
+                                        <li className="flex items-center gap-3 text-xs">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                                            Elimina notificaciones irrelevantes
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+
+                    {/* Footer Fijo */}
+                    <div className="text-center py-10 opacity-20">
+                        <p className="text-[9px] font-black uppercase tracking-[0.4em]">Propiedad del Sistema PIR ✨</p>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
