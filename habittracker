@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Habit Tracker Mensual</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 0;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 40px;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            color: #111;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100vh;
+            width: 100vw;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid #111;
+            padding-bottom: 10px;
+        }
+        .title-container h1 {
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .title-container p {
+            font-size: 14px;
+            margin: 5px 0 0 0;
+            letter-spacing: 1px;
+            color: #555;
+        }
+        
+        /* Contenedor Principal en Grid */
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 1fr;
+            gap: 30px;
+            align-items: center;
+            flex-grow: 1;
+            margin: 20px 0;
+        }
+
+        /* Columna Izquierda: Hábitos */
+        .habits-column {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+        }
+        .habits-column h3 {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+        .habit-line {
+            display: flex;
+            align-items: center;
+            margin-bottom: 18px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .habit-number {
+            width: 25px;
+        }
+        .habit-line .line {
+            flex-grow: 1;
+            border-bottom: 1px solid #111;
+            margin-left: 10px;
+            height: 15px;
+        }
+
+        /* Columna Central: La Rueda */
+        .wheel-column {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        svg {
+            transform: rotate(-90deg); /* Orientar el día 1 arriba */
+            width: 100%;
+            max-width: 420px;
+            height: auto;
+        }
+        .wheel-center-text {
+            position: absolute;
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .wheel-center-text div {
+            border-bottom: 1px solid #111;
+            width: 80px;
+            margin: 4px auto;
+            height: 16px;
+        }
+
+        /* Columna Derecha: Observaciones y Objetivos */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            justify-content: center;
+            height: 100%;
+        }
+        .box {
+            border: 2px solid #111;
+        }
+        .box-title {
+            background-color: #111;
+            color: #fff;
+            text-align: center;
+            padding: 6px;
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .obs-lines {
+            padding: 10px 0;
+        }
+        .obs-line {
+            border-bottom: 1px solid #ccc;
+            margin: 0 15px 15px 15px;
+            height: 15px;
+        }
+        .obs-line:last-child {
+            margin-bottom: 5px;
+        }
+        
+        /* Bloque de Objetivos Clave */
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            height: 100px;
+        }
+        .goal-cell {
+            border-right: 1px solid #111;
+            position: relative;
+            padding: 10px;
+        }
+        .goal-cell:last-child {
+            border-right: none;
+        }
+        .checkbox-mini {
+            width: 12px;
+            height: 12px;
+            border: 1px solid #111;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+        }
+
+        /* Footer con Frase Motivacional */
+        footer {
+            text-align: center;
+            font-style: italic;
+            font-size: 12px;
+            color: #333;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+        footer strong {
+            text-transform: uppercase;
+            font-style: normal;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="title-container">
+            <h1>Monthly Planning</h1>
+            <p>ORGANIZACIÓN & CONSTANCIA</p>
+        </div>
+    </header>
+
+    <div class="main-container">
+        
+        <!-- HÁBITOS -->
+        <div class="habits-column">
+            <h3>HABITS:</h3>
+            <div class="habit-line"><span class="habit-number">1.</span><div class="line"></div></div>
+            <div class="habit-line"><span class="habit-number">2.</span><div class="line"></div></div>
+            <div class="habit-line"><span class="habit-number">3.</span><div class="line"></div></div>
+            <div class="habit-line"><span class="habit-number">4.</span><div class="line"></div></div>
+            <div class="habit-line"><span class="habit-number">5.</span><div class="line"></div></div>
+            <div class="habit-line"><span class="habit-number">6.</span><div class="line"></div></div>
+            <div class="habit-line"><span class="habit-number">7.</span><div class="line"></div></div>
+            <div class="habit-line"><span class="habit-number">8.</span><div class="line"></div></div>
+        </div>
+
+        <!-- RUEDA (Rastreador Circular) -->
+        <div class="wheel-column">
+            <!-- El texto del centro se posiciona flotando en medio del SVG -->
+            <div class="wheel-center-text">
+                MONTH/YEAR:
+                <div></div>
+                <div></div>
+            </div>
+            
+            <!-- Generación de los círculos y divisiones con SVG -->
+            <svg viewBox="-220 -220 440 440">
+                <defs>
+                    <!-- Máscara para dejar el centro vacío como en la imagen original -->
+                    <mask id="center-hole">
+                        <rect x="-220" y="-220" width="440" height="440" fill="white" />
+                        <circle cx="0" cy="0" r="70" fill="black" />
+                    </mask>
+                </defs>
+
+                <g mask="url(#center-hole)">
+                    <!-- Generamos los 8 círculos concéntricos para los 8 hábitos -->
+                    <!-- Radios espaciados uniformemente entre 70 y 190 -->
+                    <circle cx="0" cy="0" r="85" fill="none" stroke="#111" stroke-width="1" />
+                    <circle cx="0" cy="0" r="100" fill="none" stroke="#111" stroke-width="1" />
+                    <circle cx="0" cy="0" r="115" fill="none" stroke="#111" stroke-width="1" />
+                    <circle cx="0" cy="0" r="130" fill="none" stroke="#111" stroke-width="1" />
+                    <circle cx="0" cy="0" r="145" fill="none" stroke="#111" stroke-width="1" />
+                    <circle cx="0" cy="0" r="160" fill="none" stroke="#111" stroke-width="1" />
+                    <circle cx="0" cy="0" r="175" fill="none" stroke="#111" stroke-width="1" />
+                    <circle cx="0" cy="0" r="190" fill="none" stroke="#111" stroke-width="2" />
+
+                    <!-- Líneas divisorias para los 31 días del mes -->
+                    <!-- 360 grados / 31 días = ~11.6129 grados por día -->
+                    <!-- JS integrado abajo añade dinámicamente estas líneas y números para exactitud -->
+                    <g id="division-lines" stroke="#111" stroke-width="1"></g>
+                </g>
+                
+                <!-- Números de los días en el perímetro exterior -->
+                <g id="day-labels" font-size="10" font-family="Arial" font-weight="bold" text-anchor="middle" dominant-baseline="central"></g>
+            </svg>
+        </div>
+
+        <!-- OBSERVACIONES Y METAS -->
+        <div class="right-column">
+            
+            <div class="box">
+                <div class="box-title">Observations</div>
+                <div class="obs-lines">
+                    <div class="obs-line"></div>
+                    <div class="obs-line"></div>
+                    <div class="obs-line"></div>
+                    <div class="obs-line"></div>
+                    <div class="obs-line"></div>
+                </div>
+            </div>
+
+            <div class="box">
+                <div class="box-title">Key Goals</div>
+                <div class="goals-grid">
+                    <div class="goal-cell"><div class="checkbox-mini"></div></div>
+                    <div class="goal-cell"><div class="checkbox-mini"></div></div>
+                    <div class="goal-cell"><div class="checkbox-mini"></div></div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- FRASE INSPIRACIONAL DEL ORIGINAL -->
+    <footer>
+        <strong>Discipline.</strong> "Discipline doesn't care how you feel. Discipline is doing what needs to be done, even when you don't feel like doing it."
+    </footer>
+
+    <!-- Script para renderizar las líneas y números del círculo de forma matemática exacta -->
+    <script>
+        const totalDays = 31;
+        const linesContainer = document.getElementById('division-lines');
+        const labelsContainer = document.getElementById('day-labels');
+        const innerRadius = 70;
+        const outerRadius = 190;
+        const labelRadius = 203; // Un poco más allá del borde exterior
+
+        for (let i = 0; i < totalDays; i++) {
+            const angleDeg = (i * 360) / totalDays;
+            const angleRad = (angleDeg * Math.PI) / 180;
+
+            // 1. Crear líneas radiales
+            const x1 = innerRadius * Math.cos(angleRad);
+            const y1 = innerRadius * Math.sin(angleRad);
+            const x2 = outerRadius * Math.cos(angleRad);
+            const y2 = outerRadius * Math.sin(angleRad);
+
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", x1);
+            line.setAttribute("y1", y1);
+            line.setAttribute("x2", x2);
+            line.setAttribute("y2", y2);
+            linesContainer.appendChild(line);
+
+            // 2. Crear los números de los días (centrados en cada porción)
+            const midAngleDeg = angleDeg + (360 / totalDays / 2);
+            const midAngleRad = (midAngleDeg * Math.PI) / 180;
+            const lx = labelRadius * Math.cos(midAngleRad);
+            const ly = labelRadius * Math.sin(midAngleRad);
+
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", lx);
+            text.setAttribute("y", ly);
+            
+            // Rotar el texto ligeramente para que acompañe la curvatura externa y sea legible
+            let transformAngle = midAngleDeg + 90; 
+            // Corregir orientación para que no quede el texto boca abajo en la parte inferior
+            if (midAngleDeg > 90 && midAngleDeg < 270) {
+                transformAngle -= 180;
+            }
+            text.setAttribute("transform", `rotate(${transformAngle}, ${lx}, ${ly})`);
+            
+            text.textContent = i + 1;
+            labelsContainer.appendChild(text);
+        }
+    </script>
+</body>
+</html>
