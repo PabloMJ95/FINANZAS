@@ -37,6 +37,13 @@
             border: 2px solid white;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
+        .wheel-cell {
+            transition: fill 0.1s ease;
+            cursor: pointer;
+        }
+        .wheel-cell:hover {
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -45,13 +52,11 @@
     <script type="text/babel">
         const { useState, useMemo, useEffect } = React;
 
-        // Definimos los componentes de Recharts de forma segura dentro del script de Babel
         const { 
             AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
-            ResponsiveContainer, PieChart, Pie, Cell, Legend 
+            ResponsiveContainer, PieChart, Pie, Cell 
         } = window.Recharts;
 
-        // Colores para los gráficos
         const COLORS = ['#6366f1', '#f43f5e', '#10b981', '#f59e0b', '#8b5cf6', '#64748b'];
 
         const App = () => {
@@ -75,6 +80,18 @@
                 bitcoin: 10
             });
 
+            // --- ESTADOS DEL HABIT TRACKER CONECTADO ---
+            const [selectedColor, setSelectedColor] = useState('#10b981'); 
+            const [habitList, setHabitList] = useState([
+                "Despertar 6:30", "Vitaminas", "Correr 1K", "Sin Azúcar", 
+                "Leer 10 págs", "2L Agua", "Meditación", "Dormir 22:30"
+            ]);
+            
+            // Matriz indexada (8 hábitos x 31 días)
+            const [wheelProgress, setWheelProgress] = useState(
+                Array(8).fill(null).map(() => Array(31).fill('#ffffff'))
+            );
+
             const assetInfo = {
                 rentaVariable: { label: 'Acciones (RV)', color: '#6366f1', return: 0.09 },
                 rentaFija: { label: 'Bonos (RF)', color: '#94a3b8', return: 0.03 },
@@ -82,7 +99,6 @@
                 bitcoin: { label: 'Bitcoin', color: '#f97316', return: 0.15 }
             };
 
-            // Cálculos
             const totalExpenses = useMemo(() => Object.values(expenses).reduce((a, b) => a + b, 0), [expenses]);
             const surplus = income - totalExpenses;
             const savingsRate = income > 0 ? ((surplus / income) * 100).toFixed(0) : 0;
@@ -96,13 +112,6 @@
             const budgetPieData = useMemo(() => 
                 Object.keys(expenses).map(key => ({ name: key.toUpperCase(), value: expenses[key] })), 
             [expenses]);
-
-            const investPieData = useMemo(() => 
-                Object.keys(allocation).map(key => ({ 
-                    name: assetInfo[key].label, 
-                    value: allocation[key] 
-                })), 
-            [allocation]);
 
             const projectionData = useMemo(() => {
                 const data = [];
@@ -124,6 +133,144 @@
             useEffect(() => {
                 if (window.lucide) window.lucide.createIcons();
             }, [activeTab]);
+
+            const handleCellClick = (habitIndex, dayIndex) => {
+                const updatedProgress = wheelProgress.map((habitRow, hIdx) => {
+                    if (hIdx === habitIndex) {
+                        return habitRow.map((currentCellColor, dIdx) => 
+                            dIdx === dayIndex ? selectedColor : currentCellColor
+                        );
+                    }
+                    return habitRow;
+                });
+                setWheelProgress(updatedProgress);
+            };
+
+            // --- NUEVO RENDER DEL TRACKER CONEXO (HÁBITOS LÍNEAS + RUEDA EN UN SOLO SVG) ---
+            const renderUnifiedTrackerSVG = () => {
+                const totalDays = 31;
+                // Ajustamos el origen (cx, cy) hacia la derecha para dar espacio a los textos de la izquierda
+                const cx = 220; 
+                const cy = 200;
+                const innerRadius = 60;
+                const ringWidth = 14;
+
+                const paths = [];
+                const elements = [];
+
+                // 1. Renderizar Líneas Conectoras Horizontales y Textos de los Hábitos (Fiel a la foto)
+                for (let i = 0; i < 8; i++) {
+                    // El radio de cada anillo de dentro hacia afuera (el hábito 1 es el de más afuera en la pizarra)
+                    const currentRadius = innerRadius + ((7 - i) * ringWidth) + ringWidth;
+                    
+                    // Línea horizontal que va desde el borde izquierdo del mapa SVG hasta tocar el inicio de la rueda (Día 1, arriba a 90° hacia la izquierda)
+                    const lineX1 = 15;
+                    const lineX2 = cx;
+                    const lineY = cy - currentRadius;
+
+                    elements.push(
+                        <g key={`habit-line-group-${i}`}>
+                            {/* Texto del Hábito */}
+                            <text 
+                                x={lineX1} 
+                                y={lineY - 4} 
+                                fontSize="10" 
+                                fontWeight="bold" 
+                                fill="#1e293b"
+                            >
+                                {`${i + 1}. ${habitList[i].toUpperCase()}`}
+                            </text>
+                            {/* Línea guía idéntica al tracker real */}
+                            <line 
+                                x1={lineX1} 
+                                y1={lineY} 
+                                x2={lineX2} 
+                                y2={lineY} 
+                                stroke="#94a3b8" 
+                                strokeWidth="0.75" 
+                            />
+                        </g>
+                    );
+                }
+
+                // 2. Renderizar Celdas de la Rueda (Iniciando el ciclo del Día 1 justo arriba)
+                for (let day = 0; day < totalDays; day++) {
+                    // Desplazamos -90 grados para que el Día 1 empiece arriba del todo alineado con las guías
+                    const startAngleDeg = (day * 360) / totalDays - 90;
+                    const endAngleDeg = ((day + 1) * 360) / totalDays - 90;
+                    
+                    const startRad = (startAngleDeg * Math.PI) / 180;
+                    const endRad = (endAngleDeg * Math.PI) / 180;
+
+                    for (let habit = 0; habit < 8; habit++) {
+                        // El hábito 1 de la lista corresponde al anillo más externo (habit = 7)
+                        const ringIndex = 7 - habit; 
+                        const rIn = innerRadius + (ringIndex * ringWidth);
+                        const rOut = rIn + ringWidth;
+
+                        const x1 = cx + rIn * Math.cos(startRad);
+                        const y1 = cy + rIn * Math.sin(startRad);
+                        const x2 = cx + rOut * Math.cos(startRad);
+                        const y2 = cy + rOut * Math.sin(startRad);
+                        const x3 = cx + rOut * Math.cos(endRad);
+                        const y3 = cy + rOut * Math.sin(endRad);
+                        const x4 = cx + rIn * Math.cos(endRad);
+                        const y4 = cy + rIn * Math.sin(endRad);
+
+                        const pathData = `M ${x1} ${y1} L ${x2} ${y2} A ${rOut} ${rOut} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${rIn} ${rIn} 0 0 0 ${x1} ${y1} Z`;
+                        const cellColor = wheelProgress[habit][day];
+
+                        paths.push(
+                            <path 
+                                key={`cell-${habit}-${day}`}
+                                d={pathData}
+                                fill={cellColor}
+                                stroke="#cbd5e1"
+                                strokeWidth="0.5"
+                                className="wheel-cell"
+                                onClick={() => handleCellClick(habit, day)}
+                            />
+                        );
+                    }
+
+                    // 3. Renderizar los números de los días en la periferia exterior de la rueda
+                    const midAngleDeg = startAngleDeg + (360 / totalDays / 2);
+                    const midAngleRad = (midAngleDeg * Math.PI) / 180;
+                    const labelRadius = innerRadius + (8 * ringWidth) + 10;
+                    const lx = cx + labelRadius * Math.cos(midAngleRad);
+                    const ly = cy + labelRadius * Math.sin(midAngleRad);
+
+                    let transformAngle = midAngleDeg + 90;
+                    if (midAngleDeg > 0 && midAngleDeg < 180) transformAngle -= 180;
+
+                    elements.push(
+                        <text
+                            key={`day-label-${day}`}
+                            x={lx}
+                            y={ly}
+                            fontSize="8"
+                            fontWeight="800"
+                            fill="#64748b"
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            transform={`rotate(${transformAngle}, ${lx}, ${ly})`}
+                        >
+                            {day + 1}
+                        </text>
+                    );
+                }
+
+                return (
+                    <g>
+                        {paths}
+                        {elements}
+                        {/* Texto Central Decorativo */}
+                        <circle cx={cx} cy={cy} r={innerRadius} fill="#ffffff" />
+                        <text x={cx} y={cy - 5} fontSize="7" fontWeight="bold" fill="#94a3b8" textAnchor="middle">MONTH/YEAR</text>
+                        <text x={cx} y={cy + 8} fontSize="10" fontStyle="italic" fontWeight="bold" fill="#4f46e5" textAnchor="middle">MARZO</text>
+                    </g>
+                );
+            };
 
             return (
                 <div className="min-h-screen max-w-md mx-auto bg-slate-50 pb-24">
@@ -147,7 +294,7 @@
                     {/* Navegación por Pestañas */}
                     <div className="px-4 -mt-6 relative z-20">
                         <div className="bg-white/80 backdrop-blur-xl border border-slate-200 p-1.5 rounded-2xl flex shadow-lg">
-                            {['presupuesto', 'inversion', 'proyeccion'].map(tab => (
+                            {['presupuesto', 'inversion', 'proyeccion', 'hábitos'].map(tab => (
                                 <button 
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
@@ -237,12 +384,6 @@
                                         ))}
                                     </div>
                                 </div>
-                                <div className="p-6 bg-emerald-50 rounded-[2rem] border border-emerald-100">
-                                    <p className="text-[10px] font-black text-emerald-700 uppercase mb-2">💡 Sabiduría de Babilonia</p>
-                                    <p className="text-xs text-emerald-800 leading-relaxed italic">
-                                        "El oro llega con gusto al hombre que ahorra no menos de una décima parte". Tu inversión mensual de {surplus}€ es el {savingsRate}% de tu sueldo. Vas por el buen camino.
-                                    </p>
-                                </div>
                             </div>
                         )}
 
@@ -263,29 +404,68 @@
                                             </AreaChart>
                                         </ResponsiveContainer>
                                     </div>
-                                    <div className="mt-4 p-4 bg-indigo-50 rounded-2xl">
-                                        <p className="text-[10px] font-bold text-indigo-700 text-center uppercase tracking-widest leading-relaxed">
-                                            Capital Final: {projectionData[20].valor.toLocaleString()}€
-                                        </p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* PESTAÑA ACTUALIZADA: HÁBITOS (CONEXIÓN LÍNEAS-RUEDA COMPLETA) */}
+                        {activeTab === 'hábitos' && (
+                            <div className="space-y-6 animate-in fade-in duration-500">
+                                <div className="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+                                    <h3 className="text-xs font-black uppercase text-slate-400 mb-4 flex items-center gap-2">
+                                        <i data-lucide="check-circle" className="w-3 h-3 text-indigo-500"></i> Tracker Conectado Avanzado
+                                    </h3>
+
+                                    {/* Selector de Rotulador */}
+                                    <div className="flex justify-center gap-2 mb-4 bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                                        <button 
+                                            onClick={() => setSelectedColor('#10b981')} 
+                                            className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all ${selectedColor === '#10b981' ? 'bg-emerald-500 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200'}`}
+                                        >
+                                            Verde ✔
+                                        </button>
+                                        <button 
+                                            onClick={() => setSelectedColor('#f43f5e')} 
+                                            className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all ${selectedColor === '#f43f5e' ? 'bg-rose-500 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200'}`}
+                                        >
+                                            Rojo ✖
+                                        </button>
+                                        <button 
+                                            onClick={() => setSelectedColor('#ffffff')} 
+                                            className={`flex-1 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all ${selectedColor === '#ffffff' ? 'bg-slate-700 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200'}`}
+                                        >
+                                            Goma 🧽
+                                        </button>
+                                    </div>
+
+                                    {/* Unificado en un único bloque SVG panorámico */}
+                                    <div className="w-full bg-white flex justify-center py-2">
+                                        <svg viewBox="0 0 400 390" className="w-full max-w-[370px] h-auto">
+                                            {renderUnifiedTrackerSVG()}
+                                        </svg>
                                     </div>
                                 </div>
 
-                                <div className="bg-slate-900 p-6 rounded-[2rem] text-white">
-                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-3">Sistemas de Energía (Moris)</h4>
-                                    <ul className="space-y-3">
-                                        <li className="flex items-center gap-3 text-xs">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                                            Tuppers el domingo (Batch Cooking)
-                                        </li>
-                                        <li className="flex items-center gap-3 text-xs">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                                            Ropa en el burro para toda la semana
-                                        </li>
-                                        <li className="flex items-center gap-3 text-xs">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
-                                            Elimina notificaciones irrelevantes
-                                        </li>
-                                    </ul>
+                                {/* Formulario para renombrar hábitos */}
+                                <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100">
+                                    <h4 className="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-wider">Editar Etiquetas:</h4>
+                                    <div className="space-y-2">
+                                        {habitList.map((habit, idx) => (
+                                            <div key={idx} className="flex items-center gap-2">
+                                                <span className="text-xs font-black text-indigo-500 w-3">{idx + 1}</span>
+                                                <input 
+                                                    type="text" 
+                                                    value={habit}
+                                                    onChange={(e) => {
+                                                        const newHabits = [...habitList];
+                                                        newHabits[idx] = e.target.value;
+                                                        setHabitList(newHabits);
+                                                    }}
+                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         )}
